@@ -1,0 +1,1 @@
+{"type":"record","name":"RemoteControl","namespace":"szp.rafael.rccar.dto","fields":[{"name":"part","type":"Part"},{"name":"id","type":"string"},{"name":"channelFrequency","type":{"type":"enum","name":"ChannelFrequencyType","symbols":["RF_27","RF_49","RF_50","RF_53","RF_72","RF_75"]}}]}

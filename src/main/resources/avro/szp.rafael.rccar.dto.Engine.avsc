@@ -1,0 +1,1 @@
+{"type":"record","name":"Engine","namespace":"szp.rafael.rccar.dto","fields":[{"name":"part","type":"Part"},{"name":"id","type":"string"}]}

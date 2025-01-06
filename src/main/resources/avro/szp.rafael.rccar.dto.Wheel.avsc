@@ -1,0 +1,1 @@
+{"type":"record","name":"Wheel","namespace":"szp.rafael.rccar.dto","fields":[{"name":"part","type":"Part"},{"name":"id","type":"string"},{"name":"placement","type":{"type":"enum","name":"PlacementType","symbols":["FRONT_LEFT","FRONT_RIGHT","REAR_LEFT","REAR_RIGHT"]}}]}
