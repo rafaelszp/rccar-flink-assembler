@@ -7,8 +7,10 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.DefaultRollingPolicy;
 import szp.rafael.rccar.dto.Body;
 import szp.rafael.rccar.dto.Engine;
+import szp.rafael.rccar.dto.RCCar;
 import szp.rafael.rccar.dto.RemoteControl;
 import szp.rafael.rccar.flink.stream.BodyEngineJoin;
+import szp.rafael.rccar.flink.stream.RCCarRemoteControlJoin;
 import szp.rafael.rccar.flink.util.RCCarStreamFactory;
 
 import java.io.File;
@@ -40,6 +42,9 @@ public class RCCarAssembler {
         bodyStream.connect(engineStream)
                 .keyBy(b->b.getPart().getSku(), e->e.getPart().getSku())
                 .process(new BodyEngineJoin())
+                .connect(remoteControlStream)
+                .keyBy(RCCar::getSku, r->r.getPart().getSku())
+                .process(new RCCarRemoteControlJoin())
                 .map(rccar -> {
                     var body = rccar.getBody();
                     var engine = rccar.getEngine() ;
@@ -48,6 +53,7 @@ public class RCCarAssembler {
                     System.out.printf("rccar: %s:\n", rccar);
                     return rccar.toString();
                 })
+
                 .sinkTo(sink);
 
 //        bodyStream.print();
