@@ -5,6 +5,8 @@ import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
 import org.apache.flink.util.Collector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import szp.rafael.rccar.dto.Body;
 import szp.rafael.rccar.dto.CarSituation;
 import szp.rafael.rccar.dto.Engine;
@@ -12,6 +14,8 @@ import szp.rafael.rccar.dto.RCCar;
 
 
 public class BodyEngineJoin extends KeyedCoProcessFunction<String, Body, Engine, RCCar> {
+
+    private static final Logger logger = LoggerFactory.getLogger(RCCarRemoteControlJoin.class);
 
     private ValueState<Body> bodyState;
     private ValueState<Engine> engineState;
@@ -62,6 +66,7 @@ public class BodyEngineJoin extends KeyedCoProcessFunction<String, Body, Engine,
             timeState.update(timer);
             procTimeState.update( context.timerService().currentProcessingTime());
             context.timerService().registerProcessingTimeTimer(timer);
+            logger.info("Waiting {} Sku {}'s Engine arrival.",TIMEOUT,body.getPart().getSku());
         }
     }
 
@@ -77,6 +82,7 @@ public class BodyEngineJoin extends KeyedCoProcessFunction<String, Body, Engine,
             timeState.update(timer);
             procTimeState.update( context.timerService().currentProcessingTime());
             context.timerService().registerProcessingTimeTimer(timer);
+            logger.info("Waiting {} Sku {} Body arrival.",TIMEOUT,body.getPart().getSku());
         }
     }
 

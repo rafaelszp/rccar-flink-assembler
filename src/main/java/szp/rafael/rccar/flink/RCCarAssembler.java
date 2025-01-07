@@ -11,6 +11,7 @@ import szp.rafael.rccar.dto.RCCar;
 import szp.rafael.rccar.dto.RemoteControl;
 import szp.rafael.rccar.flink.stream.BodyEngineJoin;
 import szp.rafael.rccar.flink.stream.RCCarRemoteControlJoin;
+import szp.rafael.rccar.flink.stream.RCCarWheelsJoin;
 import szp.rafael.rccar.flink.util.RCCarStreamFactory;
 
 import java.io.File;
@@ -45,6 +46,9 @@ public class RCCarAssembler {
                 .connect(remoteControlStream)
                 .keyBy(RCCar::getSku, r->r.getPart().getSku())
                 .process(new RCCarRemoteControlJoin())
+                .connect(wheelStream)
+                .keyBy(RCCar::getSku, w->w.getPart().getSku())
+                .process(new RCCarWheelsJoin())
                 .map(rccar -> {
                     var body = rccar.getBody();
                     var engine = rccar.getEngine() ;
@@ -55,11 +59,6 @@ public class RCCarAssembler {
                 })
 
                 .sinkTo(sink);
-
-//        bodyStream.print();
-//        engineStream.print();
-//        remoteControlStream.print();
-//        wheelStream.print();
 
         env.execute("Flink avro rc assembler");
 

@@ -5,12 +5,15 @@ import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
 import org.apache.flink.util.Collector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import szp.rafael.rccar.dto.CarSituation;
 import szp.rafael.rccar.dto.RCCar;
 import szp.rafael.rccar.dto.RemoteControl;
 
 public class RCCarRemoteControlJoin extends KeyedCoProcessFunction<String, RCCar, RemoteControl,RCCar> {
 
+    private static final Logger logger = LoggerFactory.getLogger(RCCarRemoteControlJoin.class);
     private ValueState<RCCar> rccarState;
     private ValueState<RemoteControl> remoteControlState;
     private ValueState<Long> timeoutState;
@@ -37,6 +40,7 @@ public class RCCarRemoteControlJoin extends KeyedCoProcessFunction<String, RCCar
             rccarState.update(rcCar);
             timeoutState.update(context.timerService().currentProcessingTime() + TIMEOUT);
             context.timerService().registerProcessingTimeTimer(timeoutState.value());
+            logger.info("Waiting {} for Sku {}'s Remote control arrival.",TIMEOUT,rcCar.getSku());
         }
 
     }
