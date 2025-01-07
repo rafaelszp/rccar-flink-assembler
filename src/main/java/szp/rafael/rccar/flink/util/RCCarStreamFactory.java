@@ -19,23 +19,28 @@ public class RCCarStreamFactory {
 
     public static DataStream<Body> createBodyStream(StreamExecutionEnvironment env) {
 
+        //kafkaProps.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        String groupId = RCCarConfig.RCCAR_BODY + "-group-" + getaLong();
         KafkaSource<Body> bodySource = KafkaSource.<Body>builder()
                 .setBootstrapServers(RCCarConfig.KAFKA_BOOTSTRAP_SERVERS)
                 .setTopics(RCCarConfig.RCCAR_BODY)
-                .setGroupId(RCCarConfig.RCCAR_BODY+"-group-"+ getaLong())
-                .setStartingOffsets(OffsetsInitializer.earliest())
+                .setGroupId(groupId)
+                .setStartingOffsets(OffsetsInitializer.latest())
                 .setDeserializer(AvroDeserializer.create(Body.class, RCCarConfig.REGISTRY_URL))
+                .setProperties(RCCarConfig.kafkaProperties(groupId))
                 .build();
         return env.fromSource(bodySource, WatermarkStrategy.noWatermarks(), "RC CAR Body Source").keyBy(body -> body.getPart().getSku());
     }
 
     public static DataStream<Engine> createEngineStream(StreamExecutionEnvironment env) {
+        String groupId = RCCarConfig.RCCAR_ENGINE + "-group-" + getaLong();
         KafkaSource<Engine> engineSource = KafkaSource.<Engine>builder()
                 .setBootstrapServers(RCCarConfig.KAFKA_BOOTSTRAP_SERVERS)
                 .setTopics(RCCarConfig.RCCAR_ENGINE)
-                .setGroupId(RCCarConfig.RCCAR_ENGINE+"-group-"+ getaLong())
-                .setStartingOffsets(OffsetsInitializer.earliest())
+                .setGroupId(groupId)
+                .setStartingOffsets(OffsetsInitializer.latest())
                 .setDeserializer(AvroDeserializer.create(Engine.class, RCCarConfig.REGISTRY_URL))
+                .setProperties(RCCarConfig.kafkaProperties(groupId))
                 .build();
         return env.fromSource(engineSource, WatermarkStrategy.noWatermarks(), "RC CAR Engine Source").keyBy(engine -> engine.getPart().getSku());
     }
@@ -46,23 +51,27 @@ public class RCCarStreamFactory {
     }
 
     public static DataStream<RemoteControl> createRemoteControlStream(StreamExecutionEnvironment env) {
+        String groupId = RCCarConfig.RCCAR_REMOTE_CONTROL + "-group-" + getaLong();
         KafkaSource<RemoteControl> remoteControlSource = KafkaSource.<RemoteControl>builder()
                 .setBootstrapServers(RCCarConfig.KAFKA_BOOTSTRAP_SERVERS)
                 .setTopics(RCCarConfig.RCCAR_REMOTE_CONTROL)
-                .setGroupId(RCCarConfig.RCCAR_REMOTE_CONTROL+"-group-"+ getaLong())
-                .setStartingOffsets(OffsetsInitializer.earliest())
+                .setGroupId(groupId)
+                .setStartingOffsets(OffsetsInitializer.latest())
                 .setDeserializer(AvroDeserializer.create(RemoteControl.class, RCCarConfig.REGISTRY_URL))
+                .setProperties(RCCarConfig.kafkaProperties(groupId))
                 .build();
         return env.fromSource(remoteControlSource, WatermarkStrategy.noWatermarks(), "RC CAR Remote Control Source").keyBy(remoteControl -> remoteControl.getPart().getSku());
     }
 
     public static DataStream<Wheel> createWheelStream(StreamExecutionEnvironment env) {
+        String groupId = RCCarConfig.RCCAR_WHEEL + "-group-" + getaLong();
         KafkaSource<Wheel> wheelSource = KafkaSource.<Wheel>builder()
                 .setBootstrapServers(RCCarConfig.KAFKA_BOOTSTRAP_SERVERS)
                 .setTopics(RCCarConfig.RCCAR_WHEEL)
-                .setGroupId(RCCarConfig.RCCAR_WHEEL+"-group-"+ getaLong())
-                .setStartingOffsets(OffsetsInitializer.earliest())
+                .setGroupId(groupId)
+                .setStartingOffsets(OffsetsInitializer.latest())
                 .setDeserializer(AvroDeserializer.create(Wheel.class, RCCarConfig.REGISTRY_URL))
+                .setProperties(RCCarConfig.kafkaProperties(groupId))
                 .build();
         return env.fromSource(wheelSource, WatermarkStrategy.noWatermarks(), "RC CAR Wheel Source").keyBy(wheel -> wheel.getPart().getSku());
     }

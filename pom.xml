@@ -8,6 +8,7 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
+        <failOnSnapshots>true</failOnSnapshots>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <assertj.version>3.24.2</assertj.version>
@@ -242,6 +243,59 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven-enforcer-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>enforce-banned-dependencies</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <excludes>
+                                        <!-- SLF4j bridges are excluded since the Log4j bridges are used (https://logging.apache.org/log4j/2.x/faq.html#which_jars) -->
+                                        <exclude>org.slf4j:jcl-over-slf4j
+                                        </exclude> <!-- should be org.apache.logging.log4j:log4j-jcl -->
+                                        <exclude>org.slf4j:log4j-over-slf4j
+                                        </exclude> <!-- should be org.apache.logging.log4j:log4j-1.2-api -->
+                                        <exclude>org.slf4j:jul-to-slf4j
+                                        </exclude> <!-- should be org.apache.logging.log4j:log4j-jul -->
+                                        <exclude>org.slf4j:slf4j-jdk14</exclude>
+                                        <exclude>org.slf4j:slf4j-log4j12</exclude>
+
+                                        <!-- do not allow other logging implementations (commons-logging is needed for log4j-jcl) -->
+                                        <exclude>log4j:log4j</exclude> <!-- this is version 1.x, 2.x is used -->
+                                        <exclude>ch.qos.reload4j:reload4j</exclude> <!-- this is a fork of log4j 1.x -->
+                                        <exclude>ch.qos.logback:*
+                                        </exclude> <!-- logback should not be used at all since it's an implementation -->
+                                    </excludes>
+                                </bannedDependencies>
+                                <requireMavenVersion>
+                                    <version>3.5.4</version>
+                                </requireMavenVersion>
+                            </rules>
+                            <fail>true</fail>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>enforce-no-snapshots</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireReleaseDeps/>
+                            </rules>
+                            <fail>${failOnSnapshots}</fail>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 
