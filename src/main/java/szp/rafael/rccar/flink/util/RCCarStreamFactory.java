@@ -22,7 +22,7 @@ public class RCCarStreamFactory {
         KafkaSource<Body> bodySource = KafkaSource.<Body>builder()
                 .setBootstrapServers(RCCarConfig.KAFKA_BOOTSTRAP_SERVERS)
                 .setTopics(RCCarConfig.RCCAR_BODY)
-                .setGroupId(RCCarConfig.RCCAR_BODY+"-group-"+random.nextLong(0,Long.MAX_VALUE))
+                .setGroupId(RCCarConfig.RCCAR_BODY+"-group-"+ getaLong())
                 .setStartingOffsets(OffsetsInitializer.earliest())
                 .setDeserializer(AvroDeserializer.create(Body.class, RCCarConfig.REGISTRY_URL))
                 .build();
@@ -33,18 +33,23 @@ public class RCCarStreamFactory {
         KafkaSource<Engine> engineSource = KafkaSource.<Engine>builder()
                 .setBootstrapServers(RCCarConfig.KAFKA_BOOTSTRAP_SERVERS)
                 .setTopics(RCCarConfig.RCCAR_ENGINE)
-                .setGroupId(RCCarConfig.RCCAR_ENGINE+"-group-"+random.nextLong(0,Long.MAX_VALUE))
+                .setGroupId(RCCarConfig.RCCAR_ENGINE+"-group-"+ getaLong())
                 .setStartingOffsets(OffsetsInitializer.earliest())
                 .setDeserializer(AvroDeserializer.create(Engine.class, RCCarConfig.REGISTRY_URL))
                 .build();
         return env.fromSource(engineSource, WatermarkStrategy.noWatermarks(), "RC CAR Engine Source").keyBy(engine -> engine.getPart().getSku());
     }
 
+    private static long getaLong() {
+        return random.nextLong(0, Long.MAX_VALUE);
+//        return 1234560L;
+    }
+
     public static DataStream<RemoteControl> createRemoteControlStream(StreamExecutionEnvironment env) {
         KafkaSource<RemoteControl> remoteControlSource = KafkaSource.<RemoteControl>builder()
                 .setBootstrapServers(RCCarConfig.KAFKA_BOOTSTRAP_SERVERS)
                 .setTopics(RCCarConfig.RCCAR_REMOTE_CONTROL)
-                .setGroupId(RCCarConfig.RCCAR_REMOTE_CONTROL+"-group-"+random.nextLong(0,Long.MAX_VALUE))
+                .setGroupId(RCCarConfig.RCCAR_REMOTE_CONTROL+"-group-"+ getaLong())
                 .setStartingOffsets(OffsetsInitializer.earliest())
                 .setDeserializer(AvroDeserializer.create(RemoteControl.class, RCCarConfig.REGISTRY_URL))
                 .build();
@@ -55,7 +60,7 @@ public class RCCarStreamFactory {
         KafkaSource<Wheel> wheelSource = KafkaSource.<Wheel>builder()
                 .setBootstrapServers(RCCarConfig.KAFKA_BOOTSTRAP_SERVERS)
                 .setTopics(RCCarConfig.RCCAR_WHEEL)
-                .setGroupId(RCCarConfig.RCCAR_WHEEL+"-group-"+random.nextLong(0,Long.MAX_VALUE))
+                .setGroupId(RCCarConfig.RCCAR_WHEEL+"-group-"+ getaLong())
                 .setStartingOffsets(OffsetsInitializer.earliest())
                 .setDeserializer(AvroDeserializer.create(Wheel.class, RCCarConfig.REGISTRY_URL))
                 .build();
