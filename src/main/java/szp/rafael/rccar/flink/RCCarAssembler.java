@@ -6,31 +6,33 @@ import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsIni
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import szp.rafael.rccar.dto.Body;
-import szp.rafael.rccar.flink.deserializers.BodyDeserializer;
+import szp.rafael.rccar.dto.Engine;
+import szp.rafael.rccar.dto.RemoteControl;
+import szp.rafael.rccar.dto.Wheel;
+import szp.rafael.rccar.flink.deserializers.AvroDeserializer;
+import szp.rafael.rccar.flink.util.RCCarConfig;
+import szp.rafael.rccar.flink.util.RCCarStreamFactory;
 
 import java.util.Random;
 
 public class RCCarAssembler {
 
+
+
     public static void main(String[] args) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        Random random = new Random();
+        var bodyStream = RCCarStreamFactory.createBodyStream(env);
+        var engineStream = RCCarStreamFactory.createEngineStream(env);
+        var remoteControlStream = RCCarStreamFactory.createRemoteControlStream(env);
+        var wheelStream = RCCarStreamFactory.createWheelStream(env);
 
-        KafkaSource<Body> bodySource = KafkaSource.<Body>builder()
-                .setBootstrapServers("localhost:9092")
-                .setTopics("rccar-body")
-                .setGroupId("rccar-body-group-"+random.nextLong(0,Long.MAX_VALUE))
-                .setStartingOffsets(OffsetsInitializer.earliest())
-                .setDeserializer(new BodyDeserializer())
-                .build();
-        DataStream<Body> stream = env.fromSource(bodySource, WatermarkStrategy.noWatermarks(), "RC CAR Body Source");
+        bodyStream.print();
+        engineStream.print();
+        remoteControlStream.print();
+        wheelStream.print();
 
-        stream.print();
         env.execute("Flink avro rc assembler");
-
-
-
 
     }
 
