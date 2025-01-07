@@ -40,13 +40,13 @@ public class RCCarAssembler {
         bodyStream.connect(engineStream)
                 .keyBy(b->b.getPart().getSku(), e->e.getPart().getSku())
                 .process(new BodyEngineJoin())
-                .map(tuple -> {
-                    var body = tuple.f0;
-                    var engine = tuple.f1 ;
-                    var remoteControl = tuple.f2 ;
-                    var wheels = tuple.f3 ;
-                    System.out.println("body.toString() = " + body.toString());
-                    return body.toString();
+                .map(rccar -> {
+                    var body = rccar.getBody();
+                    var engine = rccar.getEngine() ;
+                    var remoteControl = rccar.getRemoteControl() ;
+                    var wheels = rccar.getWheels() ;
+                    System.out.printf("rccar: %s:\n", rccar);
+                    return rccar.toString();
                 })
                 .sinkTo(sink);
 

@@ -3,18 +3,15 @@ package szp.rafael.rccar.flink.stream;
 import org.apache.flink.api.common.functions.OpenContext;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
-import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
 import org.apache.flink.util.Collector;
 import szp.rafael.rccar.dto.Body;
+import szp.rafael.rccar.dto.CarSituation;
 import szp.rafael.rccar.dto.Engine;
-import szp.rafael.rccar.dto.RemoteControl;
-import szp.rafael.rccar.dto.Wheel;
-
-import java.util.List;
+import szp.rafael.rccar.dto.RCCar;
 
 
-public class BodyEngineJoin extends KeyedCoProcessFunction<String, Body, Engine, Tuple4<Body,Engine, RemoteControl, List<Wheel>>> {
+public class BodyEngineJoin extends KeyedCoProcessFunction<String, Body, Engine, RCCar> {
 
     private ValueState<Body> bodyState;
     private ValueState<Engine> engineState;
@@ -36,12 +33,25 @@ public class BodyEngineJoin extends KeyedCoProcessFunction<String, Body, Engine,
         procTimeState = getRuntimeContext().getState(procTimeStateDescriptor);
     }
 
-    private Tuple4<Body,Engine,RemoteControl,List<Wheel>> join(Body body, Engine engine) {
-        return new Tuple4<Body,Engine,RemoteControl,List<Wheel>>(body, engine,null,null);
+    private RCCar join(Body body, Engine engine){
+
+        var builder = RCCar.newBuilder().setBody(body).setEngine(engine);
+        if(body!=null){
+            builder.setSku(body.getPart().getSku());
+        }else if(engine!=null){
+            builder.setSku(engine.getPart().getSku());
+        }
+        if(body==null){
+            builder.setSituation(CarSituation.MISSING_BODY);
+        }
+        if(engine==null){
+            builder.setSituation(CarSituation.MISSING_ENGINE);
+        }
+        return builder.clearWheels().clearRemoteControl().build();
     }
 
     @Override
-    public void processElement1(Body body, KeyedCoProcessFunction<String, Body, Engine, Tuple4<Body, Engine, RemoteControl, List<Wheel>>>.Context context, Collector<Tuple4<Body, Engine, RemoteControl, List<Wheel>>> collector) throws Exception {
+    public void processElement1(Body body, KeyedCoProcessFunction<String, Body, Engine, RCCar>.Context context, Collector<RCCar> collector) throws Exception {
         var engine = engineState.value();
         if (engine != null) {
             collector.collect(join(body, engine));
@@ -52,16 +62,14 @@ public class BodyEngineJoin extends KeyedCoProcessFunction<String, Body, Engine,
             timeState.update(timer);
             procTimeState.update( context.timerService().currentProcessingTime());
             context.timerService().registerProcessingTimeTimer(timer);
-            System.out.println("1>timer = " + procTimeState.value()+ " sku: "+body.getPart().getSku());
         }
     }
 
     @Override
-    public void processElement2(Engine engine, KeyedCoProcessFunction<String, Body, Engine, Tuple4<Body, Engine, RemoteControl, List<Wheel>>>.Context context, Collector<Tuple4<Body, Engine, RemoteControl, List<Wheel>>> collector) throws Exception {
+    public void processElement2(Engine engine, KeyedCoProcessFunction<String, Body, Engine, RCCar>.Context context, Collector<RCCar> collector) throws Exception {
         var body = bodyState.value();
         if (body != null) {
             collector.collect(join(body, engine));
-            System.out.println("coletou os 2" + body.toString()+ " | " + engine.toString());
             bodyState.clear();
         }else{
             engineState.update(engine);
@@ -69,25 +77,17 @@ public class BodyEngineJoin extends KeyedCoProcessFunction<String, Body, Engine,
             timeState.update(timer);
             procTimeState.update( context.timerService().currentProcessingTime());
             context.timerService().registerProcessingTimeTimer(timer);
-            System.out.println("2>timer = " + procTimeState.value() + " sku: "+engine.getPart().getSku());
         }
     }
 
     @Override
-    public void onTimer(long timestamp, KeyedCoProcessFunction<String, Body, Engine, Tuple4<Body,Engine, RemoteControl, List<Wheel>>> .OnTimerContext ctx, Collector<Tuple4<Body,Engine, RemoteControl, List<Wheel>>>  out) throws Exception {
+    public void onTimer(long timestamp, KeyedCoProcessFunction<String, Body, Engine, RCCar> .OnTimerContext ctx, Collector<RCCar>  out) throws Exception {
         if(timeState.value()!=null){
-            Long proc = procTimeState.value()!=null ? procTimeState.value() : timestamp;
-            System.out.println("Elapsed="+(timestamp-proc)+"ms");
             ctx.timerService().deleteProcessingTimeTimer(timeState.value());
         }
-        if(bodyState.value() != null) {
-            System.out.println("timeout reached, time state: "+ timeState.value() + " stamp: "+ timestamp  + " proc:"+procTimeState.value());
-            System.out.println("bodyState = " + bodyState.value());
-            System.out.println("engineState = " + engineState.value());
-            out.collect(new Tuple4<Body,Engine,RemoteControl,List<Wheel>>(bodyState.value(), engineState.value(),null,null));
+        if(bodyState.value() != null || engineState.value() != null) {
+            out.collect(join(bodyState.value(), engineState.value()));
             bodyState.clear();
-        }
-        if(engineState.value() != null) {
             engineState.clear();
         }
     }
