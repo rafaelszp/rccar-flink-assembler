@@ -12,6 +12,8 @@ public class RCCarConfig {
     public static final String RCCAR_ENGINE = "rccar-engine";
     public static final String RCCAR_REMOTE_CONTROL = "rccar-remote-control";
     public static final String RCCAR_WHEEL = "rccar-wheel";
+    public static final String RCCAR_INCOMPLETE = "rccar-incomplete";
+    public static final String RCCAR_COMPLETE = "rccar-complete";
 
     public static Properties kafkaProperties(String groupId){
         var kafkaProps = new Properties();

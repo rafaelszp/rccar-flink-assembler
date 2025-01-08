@@ -1,4 +1,4 @@
-package szp.rafael.rccar.flink.deserializers;
+package szp.rafael.rccar.flink.serdes;
 
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema;

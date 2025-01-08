@@ -1,4 +1,4 @@
-package szp.rafael.rccar.flink.util;
+package szp.rafael.rccar.flink.factory;
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.connector.kafka.source.KafkaSource;
@@ -9,12 +9,14 @@ import szp.rafael.rccar.dto.Body;
 import szp.rafael.rccar.dto.Engine;
 import szp.rafael.rccar.dto.RemoteControl;
 import szp.rafael.rccar.dto.Wheel;
-import szp.rafael.rccar.flink.deserializers.AvroDeserializer;
+import szp.rafael.rccar.flink.serdes.AvroDeserializer;
+import szp.rafael.rccar.flink.util.RCCarConfig;
 
 import java.util.Random;
 
 public class RCCarStreamFactory {
 
+    public static final OffsetsInitializer STARTING_OFFSETS_INITIALIZER = OffsetsInitializer.latest();
     private static Random random = new Random();
 
     public static DataStream<Body> createBodyStream(StreamExecutionEnvironment env) {
@@ -25,7 +27,7 @@ public class RCCarStreamFactory {
                 .setBootstrapServers(RCCarConfig.KAFKA_BOOTSTRAP_SERVERS)
                 .setTopics(RCCarConfig.RCCAR_BODY)
                 .setGroupId(groupId)
-                .setStartingOffsets(OffsetsInitializer.latest())
+                .setStartingOffsets(STARTING_OFFSETS_INITIALIZER)
                 .setDeserializer(AvroDeserializer.create(Body.class, RCCarConfig.REGISTRY_URL))
                 .setProperties(RCCarConfig.kafkaProperties(groupId))
                 .build();

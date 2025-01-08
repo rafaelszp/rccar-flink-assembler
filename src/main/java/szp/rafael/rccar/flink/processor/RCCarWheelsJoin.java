@@ -1,4 +1,4 @@
-package szp.rafael.rccar.flink.stream;
+package szp.rafael.rccar.flink.processor;
 
 import org.apache.flink.api.common.functions.OpenContext;
 import org.apache.flink.api.common.state.ListState;
