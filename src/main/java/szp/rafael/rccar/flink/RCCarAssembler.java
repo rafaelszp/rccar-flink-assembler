@@ -1,11 +1,8 @@
 package szp.rafael.rccar.flink;
 
-import org.apache.flink.api.common.serialization.SimpleStringEncoder;
-import org.apache.flink.connector.file.sink.FileSink;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
-import org.apache.flink.core.fs.Path;
+import org.apache.flink.streaming.api.datastream.AsyncDataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.DefaultRollingPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import szp.rafael.rccar.dto.CarSituation;
@@ -13,12 +10,12 @@ import szp.rafael.rccar.dto.RCCar;
 import szp.rafael.rccar.flink.factory.KafkaSinkFactory;
 import szp.rafael.rccar.flink.factory.RCCarStreamFactory;
 import szp.rafael.rccar.flink.factory.StreamExecutionEnvironmentFactory;
+import szp.rafael.rccar.flink.function.AsyncPriceCollector;
 import szp.rafael.rccar.flink.processor.BodyEngineJoin;
 import szp.rafael.rccar.flink.processor.RCCarRemoteControlJoin;
 import szp.rafael.rccar.flink.processor.RCCarWheelsJoin;
 import szp.rafael.rccar.flink.util.RCCarConfig;
 
-import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 public class RCCarAssembler {
@@ -35,17 +32,6 @@ public class RCCarAssembler {
         var wheelStream = RCCarStreamFactory.createWheelStream(env);
 
 
-        String outputPath = System.getProperty("java.io.tmpdir") + File.separator + "rccar-assembly";
-        final FileSink<String> sink = FileSink
-                .forRowFormat(new Path(outputPath), new SimpleStringEncoder<String>("UTF-8"))
-                .withRollingPolicy(
-                        DefaultRollingPolicy.builder()
-                                .withRolloverInterval(TimeUnit.SECONDS.toMillis(1))
-                                .withInactivityInterval(TimeUnit.SECONDS.toMillis(2))
-                                .withMaxPartSize(1024 * 1024 * 1024)
-                                .build())
-                .build();
-
         var rccarStream = bodyStream.connect(engineStream)
                 .keyBy(b -> b.getPart().getSku(), e -> e.getPart().getSku())
                 .process(new BodyEngineJoin())
@@ -59,6 +45,10 @@ public class RCCarAssembler {
                     logger.info("rccar: {}", rccar);
                     return rccar;
                 }).keyBy(RCCar::getSku);
+
+        AsyncDataStream.unorderedWait(rccarStream,new AsyncPriceCollector(),1000, TimeUnit.SECONDS,10);
+
+
 
         KafkaSink<RCCar> completeSink = KafkaSinkFactory.createKafkaSink(RCCarConfig.RCCAR_COMPLETE);
         KafkaSink<RCCar> missingPartsSink = KafkaSinkFactory.createKafkaSink(RCCarConfig.RCCAR_INCOMPLETE);

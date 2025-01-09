@@ -1,1 +1,1 @@
-{"type":"record","name":"Part","namespace":"szp.rafael.rccar.dto","fields":[{"name":"sku","type":"string"},{"name":"partName","type":"string"}]}
+{"type":"record","name":"Part","namespace":"szp.rafael.rccar.dto","fields":[{"name":"sku","type":"string"},{"name":"partName","type":"string"},{"name":"price","type":"double","default":0.0}]}
