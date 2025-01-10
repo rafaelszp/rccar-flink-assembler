@@ -82,7 +82,7 @@ public class BodyEngineJoin extends KeyedCoProcessFunction<String, Body, Engine,
             timeState.update(timer);
             procTimeState.update( context.timerService().currentProcessingTime());
             context.timerService().registerProcessingTimeTimer(timer);
-            logger.info("Waiting {} Sku {} Body arrival.",TIMEOUT,body.getPart().getSku());
+            logger.info("Waiting {} Sku {} Body arrival.",TIMEOUT,engine.getPart().getSku());
         }
     }
 

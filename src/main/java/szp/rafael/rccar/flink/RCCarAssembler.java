@@ -1,8 +1,14 @@
 package szp.rafael.rccar.flink;
 
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.streaming.api.datastream.AsyncDataStream;
+import org.apache.flink.streaming.api.datastream.KeyedStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.async.AsyncRetryStrategy;
+import org.apache.flink.streaming.util.retryable.AsyncRetryStrategies;
+import org.apache.flink.streaming.util.retryable.RetryPredicates;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import szp.rafael.rccar.dto.CarSituation;
@@ -46,14 +52,13 @@ public class RCCarAssembler {
                     return rccar;
                 }).keyBy(RCCar::getSku);
 
-        AsyncDataStream.unorderedWait(rccarStream,new AsyncPriceCollector(),1000, TimeUnit.SECONDS,10);
-
-
 
         KafkaSink<RCCar> completeSink = KafkaSinkFactory.createKafkaSink(RCCarConfig.RCCAR_COMPLETE);
         KafkaSink<RCCar> missingPartsSink = KafkaSinkFactory.createKafkaSink(RCCarConfig.RCCAR_INCOMPLETE);
 
-        rccarStream.filter(rccar -> rccar.getSituation().equals(CarSituation.COMPLETE))
+        SingleOutputStreamOperator<RCCar> completedStream = rccarStream.filter(rccar -> rccar.getSituation().equals(CarSituation.COMPLETE));
+        SingleOutputStreamOperator<RCCar> rcCarSingleOutputStreamOperator =  AsyncDataStream.unorderedWaitWithRetry(completedStream, new AsyncPriceCollector(), 60, TimeUnit.SECONDS, 10, createAsyncStrategy());
+        rcCarSingleOutputStreamOperator.keyBy(RCCar::getSku)
                 .sinkTo(completeSink);
 
         rccarStream.filter(rccar -> !rccar.getSituation().equals(CarSituation.COMPLETE))
@@ -61,6 +66,13 @@ public class RCCarAssembler {
 
         env.execute("Flink avro rc assembler");
 
+    }
+
+    private static AsyncRetryStrategies.FixedDelayRetryStrategy createAsyncStrategy() {
+        return new AsyncRetryStrategies.FixedDelayRetryStrategyBuilder(3, 500L) // maxAttempts=3, fixedDelay=100ms
+                .ifResult(RetryPredicates.EMPTY_RESULT_PREDICATE)
+                .ifException(RetryPredicates.HAS_EXCEPTION_PREDICATE)
+                .build();
     }
 
 }

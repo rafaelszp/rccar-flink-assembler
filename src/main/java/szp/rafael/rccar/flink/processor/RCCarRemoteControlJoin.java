@@ -40,6 +40,7 @@ public class RCCarRemoteControlJoin extends KeyedCoProcessFunction<String, RCCar
             rccarState.update(rcCar);
             timeoutState.update(context.timerService().currentProcessingTime() + TIMEOUT);
             context.timerService().registerProcessingTimeTimer(timeoutState.value());
+
             logger.info("Waiting {} for Sku {}'s Remote control arrival.",TIMEOUT,rcCar.getSku());
         }
 
