@@ -9,11 +9,11 @@ public class StreamExecutionEnvironmentFactory {
     public static StreamExecutionEnvironment createLocalEnvironment() {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         if(false) {
-            env.enableCheckpointing(1000 * 600); // Checkpoint a cada 60 segundos
+            env.enableCheckpointing(1000 * 5); // Checkpoint a cada 5 segundos
             env.getCheckpointConfig().setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE); // Modo de checkpoint
 
-            env.getCheckpointConfig().setMinPauseBetweenCheckpoints(30 * 1000); // Pausa mínima entre checkpoints
-            env.getCheckpointConfig().setCheckpointTimeout(1000 * 5 * 60); // Timeout de checkpoint
+            env.getCheckpointConfig().setMinPauseBetweenCheckpoints(50 * 100); // Pausa mínima entre checkpoints
+            env.getCheckpointConfig().setCheckpointTimeout(1000 * 5 * 3); // Timeout de checkpoint
             env.getCheckpointConfig().setTolerableCheckpointFailureNumber(2);
             // sets the checkpoint storage where checkpoint snapshots will be written
             Configuration config = new Configuration();

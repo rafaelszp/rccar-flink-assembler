@@ -3,6 +3,13 @@ mvn clean generate-resources
 mvn generate-sources
 ```
 
+## Tests
+
+### 1 - 5k messages
+Result: no messages were lost
+
+2. 
+
 ---
 ## Todo
 

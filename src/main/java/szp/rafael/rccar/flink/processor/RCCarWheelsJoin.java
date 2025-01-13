@@ -91,7 +91,7 @@ public class RCCarWheelsJoin extends KeyedCoProcessFunction<String, RCCar, Wheel
         rcCar.setWheels(new ArrayList<>());
         wheels.forEach(wheel->rcCar.getWheels().add(wheel));
         if(rcCar.getRemoteControl()!=null && rcCar.getEngine()!=null) {
-            rcCar.setSituation(CarSituation.COMPLETE);
+            rcCar.setSituation(CarSituation.AWAITING_PRICE);
         }
         if (rcCar.getWheels().isEmpty()) {
             rcCar.setSituation(CarSituation.MISSING_WHEELS);

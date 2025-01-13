@@ -5,4 +5,8 @@ public enum PartType {
     WHEEL,
     REMOTE_CONTROL,
     ENGINE;
+
+    public static String name(PartType partType){
+        return partType.name().toLowerCase().replaceAll("_", "-");
+    }
 }

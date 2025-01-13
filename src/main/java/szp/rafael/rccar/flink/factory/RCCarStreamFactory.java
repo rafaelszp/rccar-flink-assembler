@@ -5,6 +5,7 @@ import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import szp.rafael.rccar.dto.Body;
 import szp.rafael.rccar.dto.Engine;
 import szp.rafael.rccar.dto.RemoteControl;
@@ -12,11 +13,14 @@ import szp.rafael.rccar.dto.Wheel;
 import szp.rafael.rccar.flink.serdes.AvroDeserializer;
 import szp.rafael.rccar.flink.util.RCCarConfig;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Random;
 
 public class RCCarStreamFactory {
 
-    public static final OffsetsInitializer STARTING_OFFSETS_INITIALIZER = OffsetsInitializer.latest();
+    public static final OffsetsInitializer STARTING_OFFSETS_INITIALIZER = OffsetsInitializer.committedOffsets(OffsetResetStrategy.EARLIEST);
     private static Random random = new Random();
 
     public static DataStream<Body> createBodyStream(StreamExecutionEnvironment env) {
@@ -48,8 +52,11 @@ public class RCCarStreamFactory {
     }
 
     private static long getaLong() {
-        return random.nextLong(0, Long.MAX_VALUE);
-//        return 1234560L;
+        SimpleDateFormat formatador = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
+        String dataFormatada = formatador.format(new Date());
+        return Long.valueOf(dataFormatada);
+
+//        return random.nextLong(0, Long.MAX_VALUE);
     }
 
     public static DataStream<RemoteControl> createRemoteControlStream(StreamExecutionEnvironment env) {
