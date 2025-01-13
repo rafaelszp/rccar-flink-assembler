@@ -68,7 +68,7 @@ public class RCCarRemoteControlJoin extends KeyedCoProcessFunction<String, RCCar
 
     private RCCar join(RCCar rcCar, RemoteControl remoteControl){
         rcCar.setRemoteControl(remoteControl);
-        rcCar.setSituation(CarSituation.INCOMPLETE);
+        rcCar.setSituation(CarSituation.AWAITING_PRICE);
         if(remoteControl==null){
             rcCar.setSituation(CarSituation.MISSING_REMOTE_CONTROL);
         }

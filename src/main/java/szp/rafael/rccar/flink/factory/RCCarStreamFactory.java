@@ -20,7 +20,8 @@ import java.util.Random;
 
 public class RCCarStreamFactory {
 
-    public static final OffsetsInitializer STARTING_OFFSETS_INITIALIZER = OffsetsInitializer.committedOffsets(OffsetResetStrategy.EARLIEST);
+//    public static final OffsetsInitializer STARTING_OFFSETS_INITIALIZER = OffsetsInitializer.committedOffsets(OffsetResetStrategy.EARLIEST);
+    public static final OffsetsInitializer STARTING_OFFSETS_INITIALIZER = OffsetsInitializer.latest();
     private static Random random = new Random();
 
     public static DataStream<Body> createBodyStream(StreamExecutionEnvironment env) {
@@ -54,9 +55,9 @@ public class RCCarStreamFactory {
     private static long getaLong() {
         SimpleDateFormat formatador = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
         String dataFormatada = formatador.format(new Date());
-        return Long.valueOf(dataFormatada);
-
-//        return random.nextLong(0, Long.MAX_VALUE);
+//        return Long.valueOf(dataFormatada);
+//
+        return random.nextLong(0, Long.MAX_VALUE);
     }
 
     public static DataStream<RemoteControl> createRemoteControlStream(StreamExecutionEnvironment env) {

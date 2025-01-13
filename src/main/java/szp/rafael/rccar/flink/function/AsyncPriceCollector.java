@@ -26,7 +26,12 @@ public class AsyncPriceCollector extends RichAsyncFunction<RCCar, RCCar> {
     private static final Logger logger = LoggerFactory.getLogger(AsyncPriceCollector.class);
     private transient OkHttpClient client;
     AtomicReference<RCCar> carState;
+    PartType partType;
 
+
+    public AsyncPriceCollector(PartType partType) {
+        this.partType = partType;
+    }
 
     @Override
     public void open(OpenContext openContext) throws Exception {
@@ -36,14 +41,9 @@ public class AsyncPriceCollector extends RichAsyncFunction<RCCar, RCCar> {
     }
 
     @Override
-    public void asyncInvoke(RCCar rcCar, ResultFuture<RCCar> resultFuture) throws Exception {
-
+    public void asyncInvoke(RCCar rcCar, ResultFuture<RCCar> resultFuture) {
         carState.set(RCCar.newBuilder(rcCar).build());
-
-        getPrice(PartType.BODY, rcCar, resultFuture);
-        getPrice(PartType.ENGINE, rcCar, resultFuture);
-        getPrice(PartType.REMOTE_CONTROL, rcCar, resultFuture);
-        getPrice(PartType.WHEEL, rcCar, resultFuture);
+        getPrice(partType, rcCar, resultFuture);
     }
 
     private void getPrice(PartType partType, RCCar rcCar, ResultFuture<RCCar> resultFuture) {
@@ -51,15 +51,32 @@ public class AsyncPriceCollector extends RichAsyncFunction<RCCar, RCCar> {
 
         switch (partType) {
             case BODY:
+                if (rcCar.getBody() == null) {
+                    resultFuture.complete(Collections.singleton(RCCar.newBuilder(rcCar).setSituation(CarSituation.MISSING_BODY).build()));
+                    return;
+                }
                 id = rcCar.getBody().getId().toString();
+
                 break;
             case WHEEL:
+                if (rcCar.getWheels().isEmpty()) {
+                    resultFuture.complete(Collections.singleton(RCCar.newBuilder(rcCar).setSituation(CarSituation.MISSING_WHEELS).build()));
+                    return;
+                }
                 id = rcCar.getWheels().stream().findFirst().get().getId().toString();
                 break;
             case REMOTE_CONTROL:
+                if (rcCar.getRemoteControl() == null) {
+                    resultFuture.complete(Collections.singleton(RCCar.newBuilder(rcCar).setSituation(CarSituation.MISSING_REMOTE_CONTROL).build()));
+                    return;
+                }
                 id = rcCar.getRemoteControl().getId().toString();
                 break;
             case ENGINE:
+                if (rcCar.getEngine() == null) {
+                    resultFuture.complete(Collections.singleton(RCCar.newBuilder(rcCar).setSituation(CarSituation.MISSING_ENGINE).build()));
+                    return;
+                }
                 id = rcCar.getEngine().getId().toString();
                 break;
         }
@@ -108,23 +125,14 @@ public class AsyncPriceCollector extends RichAsyncFunction<RCCar, RCCar> {
                         updatedCar.setTotalPrice(BigDecimal.valueOf(totalPrice).setScale(2, RoundingMode.HALF_EVEN).doubleValue());
                         carState.set(updatedCar.build());
 
-                        if (isComplete()) {
-                            carState.set(updatedCar.setSituation(CarSituation.COMPLETE).build());
+
+                        carState.set(updatedCar.setSituation(CarSituation.COMPLETE).build());
 //                            logger.info("Completing transaction. Total price: {}. Car: {}.", totalPrice, carState.get());
-                            resultFuture.complete(Collections.singleton(carState.get()));
-                        }
+                        resultFuture.complete(Collections.singleton(updatedCar.setSituation(CarSituation.COMPLETE).build()));
                     }
                 }
             });
         }
-    }
-
-    private boolean isComplete() {
-        RCCar rcCar = carState.get();
-        return rcCar.getBody().getPart().getPrice() > 0.0
-                && rcCar.getEngine().getPart().getPrice() > 0.0
-                && rcCar.getRemoteControl().getPart().getPrice() > 0.0
-                && rcCar.getWheels().stream().reduce(0.0, (acc, w) -> acc + w.getPart().getPrice(), Double::sum) > 0.0;
     }
 
 
@@ -132,7 +140,7 @@ public class AsyncPriceCollector extends RichAsyncFunction<RCCar, RCCar> {
     public void timeout(RCCar input, ResultFuture<RCCar> resultFuture) throws Exception {
         super.timeout(input, resultFuture);
         logger.warn("TIMEOUT: {}", input.getSku());
-        var fallback = RCCar.newBuilder(input);
+        var fallback = RCCar.newBuilder(input).setSituation(CarSituation.FAILED_GET_PRICE);
         fallback.setTotalPrice(-1.0);
         resultFuture.complete(Collections.singleton(fallback.build()));
     }
