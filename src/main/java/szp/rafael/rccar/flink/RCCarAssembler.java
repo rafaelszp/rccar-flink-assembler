@@ -10,12 +10,8 @@ import org.apache.flink.streaming.util.retryable.AsyncRetryStrategies;
 import org.apache.flink.streaming.util.retryable.RetryPredicates;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import szp.rafael.rccar.dto.Body;
 import szp.rafael.rccar.dto.CarSituation;
-import szp.rafael.rccar.dto.Engine;
 import szp.rafael.rccar.dto.RCCar;
-import szp.rafael.rccar.dto.RemoteControl;
-import szp.rafael.rccar.dto.Wheel;
 import szp.rafael.rccar.flink.enums.PartType;
 import szp.rafael.rccar.flink.factory.KafkaSinkFactory;
 import szp.rafael.rccar.flink.factory.RCCarStreamFactory;
@@ -23,7 +19,6 @@ import szp.rafael.rccar.flink.factory.StreamExecutionEnvironmentFactory;
 import szp.rafael.rccar.flink.function.AsyncPriceCollector;
 import szp.rafael.rccar.flink.function.RCcarFlatMap;
 import szp.rafael.rccar.flink.processor.BodyEngineJoin;
-import szp.rafael.rccar.flink.processor.PricedRCCarProcessor;
 import szp.rafael.rccar.flink.processor.RCCarRemoteControlJoin;
 import szp.rafael.rccar.flink.processor.RCCarWheelsJoin;
 import szp.rafael.rccar.flink.util.RCCarConfig;
@@ -38,36 +33,15 @@ public class RCCarAssembler {
     public static void main(String[] args) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironmentFactory.createLocalEnvironment();
 
-        var bodyStream = RCCarStreamFactory.createBodyStream(env);
-        var engineStream = RCCarStreamFactory.createEngineStream(env);
-        var remoteControlStream = RCCarStreamFactory.createRemoteControlStream(env);
-        var wheelStream = RCCarStreamFactory.createWheelStream(env);
-
-        var rccarStream = getRccarStream(bodyStream, engineStream, remoteControlStream, wheelStream);
-
-
-        KafkaSink<RCCar> completeSink = KafkaSinkFactory.createKafkaSink(RCCarConfig.RCCAR_COMPLETE);
-        KafkaSink<RCCar> missingPartsSink = KafkaSinkFactory.createKafkaSink(RCCarConfig.RCCAR_INCOMPLETE);
+        var rccarStream = getRccarStream(env);
 
         SingleOutputStreamOperator<RCCar> awaitingPriceStream = rccarStream.filter(rccar -> rccar.getSituation().equals(CarSituation.AWAITING_PRICE));
 
         int timeout = 10 * 3;
-        SingleOutputStreamOperator<RCCar> asyncBodyStream = AsyncDataStream.unorderedWaitWithRetry(awaitingPriceStream, new AsyncPriceCollector(PartType.BODY), timeout, TimeUnit.SECONDS, 5, createAsyncStrategy());
-        SingleOutputStreamOperator<RCCar> asyncEngineStream = AsyncDataStream.unorderedWaitWithRetry(awaitingPriceStream, new AsyncPriceCollector(PartType.ENGINE), timeout, TimeUnit.SECONDS, 5, createAsyncStrategy());
-        SingleOutputStreamOperator<RCCar> asyncRCStream = AsyncDataStream.unorderedWaitWithRetry(awaitingPriceStream, new AsyncPriceCollector(PartType.REMOTE_CONTROL), timeout, TimeUnit.SECONDS, 5, createAsyncStrategy());
-        SingleOutputStreamOperator<RCCar> asyncWheelStream = AsyncDataStream.unorderedWaitWithRetry(awaitingPriceStream, new AsyncPriceCollector(PartType.WHEEL), timeout, TimeUnit.SECONDS, 5, createAsyncStrategy());
+        KeyedStream<RCCar, CharSequence> pricedBodyStream = getPricedSteam(awaitingPriceStream, timeout);
 
-        KeyedStream<RCCar, CharSequence> pricedBodyStream = asyncBodyStream.keyBy(RCCar::getSku);
-        KeyedStream<RCCar, CharSequence> pricedEngineStream = asyncEngineStream.keyBy(RCCar::getSku);
-        KeyedStream<RCCar, CharSequence> pricedRCStream = asyncRCStream.keyBy(RCCar::getSku);
-        KeyedStream<RCCar, CharSequence> pricedWheelStream = asyncWheelStream.keyBy(RCCar::getSku);
-
-
-        pricedBodyStream
-                .connect(pricedEngineStream).flatMap(new RCcarFlatMap(PartType.ENGINE)).keyBy(RCCar::getSku)
-                .connect(pricedRCStream).flatMap(new RCcarFlatMap(PartType.REMOTE_CONTROL)).keyBy(RCCar::getSku)
-                .connect(pricedWheelStream).flatMap(new RCcarFlatMap(PartType.WHEEL)).keyBy(RCCar::getSku);
-
+        KafkaSink<RCCar> completeSink = KafkaSinkFactory.createKafkaSink(RCCarConfig.RCCAR_COMPLETE);
+        KafkaSink<RCCar> missingPartsSink = KafkaSinkFactory.createKafkaSink(RCCarConfig.RCCAR_INCOMPLETE);
 
         pricedBodyStream.filter(rccar -> rccar.getSituation().equals(CarSituation.COMPLETE))
                 .sinkTo(completeSink);
@@ -78,11 +52,37 @@ public class RCCarAssembler {
         rccarStream.filter(rccar -> rccar.getSituation().name().contains("MISSING"))
                 .sinkTo(missingPartsSink);
 
+
         env.execute("Flink avro rc assembler");
 
     }
 
-    private static KeyedStream<RCCar, CharSequence> getRccarStream(DataStream<Body> bodyStream, DataStream<Engine> engineStream, DataStream<RemoteControl> remoteControlStream, DataStream<Wheel> wheelStream) {
+    private static KeyedStream<RCCar, CharSequence>  getPricedSteam(SingleOutputStreamOperator<RCCar> awaitingPriceStream, int timeout){
+        KeyedStream<RCCar, CharSequence> pricedBodyStream = getAsyncStream(PartType.BODY, awaitingPriceStream, timeout);
+        KeyedStream<RCCar, CharSequence> pricedEngineStream = getAsyncStream(PartType.ENGINE, awaitingPriceStream, timeout);
+        KeyedStream<RCCar, CharSequence> pricedRCStream = getAsyncStream(PartType.REMOTE_CONTROL, awaitingPriceStream, timeout);
+        KeyedStream<RCCar, CharSequence> pricedWheelStream = getAsyncStream(PartType.WHEEL, awaitingPriceStream, timeout);
+        pricedBodyStream
+                .connect(pricedEngineStream).flatMap(new RCcarFlatMap(PartType.ENGINE)).keyBy(RCCar::getSku)
+                .connect(pricedRCStream).flatMap(new RCcarFlatMap(PartType.REMOTE_CONTROL)).keyBy(RCCar::getSku)
+                .connect(pricedWheelStream).flatMap(new RCcarFlatMap(PartType.WHEEL)).keyBy(RCCar::getSku);
+        return pricedBodyStream;
+    }
+
+
+    private static KeyedStream<RCCar, CharSequence> getAsyncStream(PartType partType, SingleOutputStreamOperator<RCCar> awaitingPriceStream, int timeout) {
+        SingleOutputStreamOperator<RCCar> singleOutputStreamOperator = AsyncDataStream.unorderedWaitWithRetry(awaitingPriceStream, new AsyncPriceCollector(partType), timeout, TimeUnit.SECONDS, 5, createAsyncStrategy());
+        KeyedStream<RCCar, CharSequence> output = singleOutputStreamOperator.keyBy(RCCar::getSku);
+        return output;
+    }
+
+    private static DataStream<RCCar> getRccarStream(StreamExecutionEnvironment env) {
+
+        var bodyStream = RCCarStreamFactory.createBodyStream(env);
+        var engineStream = RCCarStreamFactory.createEngineStream(env);
+        var remoteControlStream = RCCarStreamFactory.createRemoteControlStream(env);
+        var wheelStream = RCCarStreamFactory.createWheelStream(env);
+
         return bodyStream.connect(engineStream)
                 .keyBy(b -> b.getPart().getSku(), e -> e.getPart().getSku())
                 .process(new BodyEngineJoin())
