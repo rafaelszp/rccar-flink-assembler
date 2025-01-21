@@ -31,6 +31,7 @@
         <avro.version>1.12.0</avro.version>
         <kafka.version>3.4.0</kafka.version>
         <okhttp.version>4.12.0</okhttp.version>
+        <commons-collections4.version>4.5.0-M3</commons-collections4.version>
     </properties>
 
     <dependencies>
@@ -149,7 +150,11 @@
             <artifactId>okhttp</artifactId>
             <version>${okhttp.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+            <version>${commons-collections4.version}</version>
+        </dependency>
 
     </dependencies>
 

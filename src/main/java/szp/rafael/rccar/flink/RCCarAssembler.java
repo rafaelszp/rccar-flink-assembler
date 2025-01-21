@@ -1,5 +1,6 @@
 package szp.rafael.rccar.flink;
 
+import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.streaming.api.datastream.AsyncDataStream;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -10,6 +11,7 @@ import org.apache.flink.streaming.util.retryable.AsyncRetryStrategies;
 import org.apache.flink.streaming.util.retryable.RetryPredicates;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import szp.rafael.rccar.dto.Body;
 import szp.rafael.rccar.dto.CarSituation;
 import szp.rafael.rccar.dto.RCCar;
 import szp.rafael.rccar.flink.enums.PartType;
@@ -24,6 +26,7 @@ import szp.rafael.rccar.flink.processor.RCCarWheelsJoin;
 import szp.rafael.rccar.flink.util.RCCarConfig;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RCCarAssembler {
 

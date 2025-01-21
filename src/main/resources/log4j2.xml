@@ -9,6 +9,9 @@
     <Logger name="net.jvw" level="DEBUG" additivity="false">
       <AppenderRef ref="Console"/>
     </Logger>
+    <Logger name="org.apache.flink.runtime.checkpoint" level="off" additivity="false">
+      <AppenderRef ref="Console" />
+    </Logger>
     <Root level="INFO">
       <AppenderRef ref="Console"/>
     </Root>

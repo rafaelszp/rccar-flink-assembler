@@ -1,0 +1,1 @@
+{"type":"record","name":"TaxTag","namespace":"szp.rafael.rccar.dto","fields":[{"name":"icms","type":"double"},{"name":"state","type":{"type":"enum","name":"State","symbols":["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"]}}]}

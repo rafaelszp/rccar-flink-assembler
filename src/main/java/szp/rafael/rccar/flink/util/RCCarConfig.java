@@ -15,6 +15,7 @@ public class RCCarConfig {
     public static final String RCCAR_WHEEL = "rccar-wheel";
     public static final String RCCAR_INCOMPLETE = "rccar-incomplete";
     public static final String RCCAR_COMPLETE = "rccar-complete";
+    public static final String TAXTAG = "rccar-taxtag";
     public static final String PRICE_URL = "http://localhost:8080/price/";
 
     public static Properties kafkaProperties(String groupId){

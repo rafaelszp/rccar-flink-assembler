@@ -34,15 +34,27 @@ mvn generate-sources
 6. All `COMPLETED` from pricedStream are sent to a new Kafka topic `rccar-completed`
 7. All other incomplete (failed to get price and missing some part) inputs from `rcarStream` and `pricedStream` are sent to a new Kafka topic `rccar-incomplete`
 
+### Strategy details
+
+1. A couple of KeyeCoProcessFunction's are used to connect respective parts streams with a maximum timeout
+2. An Async/IO strategy was used to fetch the current price of the part, based on id (park sku), from the REST API with capacity of 5 requests at a time
+3. The REST API has a random delay between 0-800ms to simulate the real world
+4. After async enrichment, all the parts are collected again and a new RCCar is built with a RichCoFlatMapFunction. In this case there is no timeout because the parts were already captured and exists in previous streams
+
+
 ## Tests
 
 ### 1 - 5k messages
 1. Async I/O with retry
 2. Timeout 30s
 3. External API random delay 0-800ms
-Result: no messages were lost
+4. 
+#### Result: no messages were lost
 
-2. 
+### 2 - Simulate crash and recovery
+1. Simulate 100 of each input parts on kafka source topics
+2. Simulate a crash during processing, random crash after (20-70) inputs
+3. Observe the recovery process
 
 
 ## References
