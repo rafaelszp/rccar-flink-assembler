@@ -10,6 +10,11 @@ mvn generate-sources
 2. Apache Flink
 3. REST API
 
+##JVM ARGS
+```
+--add-opens=java.base/java.util=ALL-UNNAMED 
+```
+
 ### Data flow
 
 1. Kafka producer sends messages to Kafka topic

@@ -114,7 +114,7 @@ public class RCCarStreamFactory {
                 .setDeserializer(AvroDeserializer.create(TaxTag.class, RCCarConfig.REGISTRY_URL))
                 .setProperties(props)
                 .build();
-        return env.fromSource(tagSource, WatermarkStrategy.noWatermarks(), "TaxTag Wheel Source").keyBy(tx -> tx.getState().name());
+        return env.fromSource(tagSource, WatermarkStrategy.noWatermarks(), "TaxTag Source").keyBy(tx -> tx.getState().name());
     }
 
 }
