@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import szp.rafael.rccar.dto.TaxTag;
 import szp.rafael.rccar.flink.factory.RCCarStreamFactory;
 import szp.rafael.rccar.flink.factory.StreamExecutionEnvironmentFactory;
-import szp.rafael.rccar.flink.processor.LastTaxTagsProcessor;
+import szp.rafael.rccar.flink.processor.LastTaxTagsMapper;
 
 public class ICMSReader {
 
@@ -21,7 +21,7 @@ public class ICMSReader {
 
         DataStream<TaxTag> taxTagStream = RCCarStreamFactory.createTaxTagStream(env);
 
-        taxTagStream.process(new LastTaxTagsProcessor()).print();
+        taxTagStream.flatMap(new LastTaxTagsMapper()).print();
 
 
         env.execute("ICMS Reader");
