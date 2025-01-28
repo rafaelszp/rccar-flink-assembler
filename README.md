@@ -15,6 +15,11 @@ mvn generate-sources
 --add-opens=java.base/java.util=ALL-UNNAMED 
 ```
 
+
+```shell
+--enable-checkpoints --brokers broker:19092 --registry-url http://schema-registry:8081
+```
+
 ### Data flow
 
 1. Kafka producer sends messages to Kafka topic
