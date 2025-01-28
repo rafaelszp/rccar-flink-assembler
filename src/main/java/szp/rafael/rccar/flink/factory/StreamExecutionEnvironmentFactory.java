@@ -26,8 +26,8 @@ public class StreamExecutionEnvironmentFactory {
 
         Configuration config = new Configuration();
         config.set(RestartStrategyOptions.RESTART_STRATEGY, "fixed-delay");
-        config.set(RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_ATTEMPTS, 3); // number of restart attempts
-        config.set(RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_DELAY, Duration.ofSeconds(3)); // delay
+        config.set(RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_ATTEMPTS, 30); // number of restart attempts
+        config.set(RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_DELAY, Duration.ofSeconds(30)); // delay
 
         if(params.has(ENABLE_CHECKPOINTS_PARAM)) {
             env.enableCheckpointing(100 * 5); // Checkpoint em ms
@@ -48,8 +48,8 @@ public class StreamExecutionEnvironmentFactory {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         Configuration config = new Configuration();
         config.set(RestartStrategyOptions.RESTART_STRATEGY, "fixed-delay");
-        config.set(RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_ATTEMPTS, 3); // number of restart attempts
-        config.set(RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_DELAY, Duration.ofSeconds(3)); // delay
+        config.set(RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_ATTEMPTS, 10); // number of restart attempts
+        config.set(RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_DELAY, Duration.ofSeconds(30)); // delay
 
         if(ENABLE_CHECKPOINTS) {
             env.enableCheckpointing(100 * 5); // Checkpoint em ms
