@@ -30,7 +30,7 @@ public class ICMSReader {
         StreamExecutionEnvironment env;
         DataStream<TaxTag> taxTagStream;
 
-        if (args.length == 0 && params.has("dev")) {
+        if (args.length == 0 || params.has("dev")) {
 
             env = StreamExecutionEnvironmentFactory.createLocalEnvironment();
 
@@ -53,7 +53,7 @@ public class ICMSReader {
     public static KafkaSink<LastTaxTags> createSink(ParameterTool params){
         String topic = "last-tax-tags";
 
-        String brokers = params.get(RCCarStreamFactory.KAFKA_BROKER_PARAM,"broker:19092");
+        String brokers = params.get(RCCarStreamFactory.KAFKA_BROKER_PARAM,"localhost:9092");
         String registryUrl = params.get(RCCarStreamFactory.REGISTRY_URL_PARAM,"http://localhost:8081");
         return KafkaSink.<LastTaxTags>builder()
                 .setBootstrapServers(brokers)
@@ -62,7 +62,6 @@ public class ICMSReader {
                         .setValueSerializationSchema(ConfluentRegistryAvroSerializationSchema.forSpecific(LastTaxTags.class, LastTaxTags.class.getName(), registryUrl))
                         .setKeySerializationSchema(tags -> tags.getStateName().toString().getBytes())
                         .setPartitioner(new FlinkFixedPartitioner<LastTaxTags>())
-
                         .build()
                 )
                 .setDeliverGuarantee(DeliveryGuarantee.EXACTLY_ONCE)

@@ -21,6 +21,12 @@
     <Logger name="org.apache.flink.api.java.typeutils.runtime.kryo" level="off" additivity="false">
       <AppenderRef ref="Console" />
     </Logger>
+    <Logger name="org.apache.kafka.clients.producer.internals" level="off" additivity="false">
+      <AppenderRef ref="Console" />
+    </Logger>
+    <Logger name="org.apache.flink.connector.kafka.sink" level="off" additivity="false">
+      <AppenderRef ref="Console" />
+    </Logger>
     <Root level="INFO">
       <AppenderRef ref="Console"/>
     </Root>
